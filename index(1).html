@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RobinPulse AI — $RPAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --night:#080B14;
+  --night2:#0D1120;
+  --night3:#111829;
+  --violet:#7C3AED;
+  --violet-dim:#5B21B6;
+  --violet-glow:rgba(124,58,237,0.25);
+  --cyan:#00F5D4;
+  --cyan-dim:#00C4AA;
+  --cyan-glow:rgba(0,245,212,0.2);
+  --orange:#FF6B35;
+  --orange-glow:rgba(255,107,53,0.2);
+  --white:#F0F4FF;
+  --muted:rgba(240,244,255,0.55);
+  --muted2:rgba(240,244,255,0.25);
+  --font:\'Plus Jakarta Sans\',sans-serif;
+  --mono:\'JetBrains Mono\',monospace;
+}
+
+html{scroll-behavior:smooth}
+body{background:var(--night);color:var(--white);font-family:var(--font);font-size:16px;line-height:1.65;overflow-x:hidden}
+
+/* ── NOISE OVERLAY ── */
+body::before{
+  content:\'\';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity:0.4;
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 2.5rem;
+  background:rgba(8,11,20,0.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(124,58,237,0.15);
+}
+.nav-logo{display:flex;align-items:center;gap:0.7rem;text-decoration:none;color:var(--white)}
+.logo-pulse{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--violet),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;font-weight:800;color:#fff;
+  box-shadow:0 0 16px var(--violet-glow);
+}
+.logo-text{font-size:1.05rem;font-weight:800;letter-spacing:-0.03em}
+.logo-text span{color:var(--cyan)}
+.nav-tag{
+  font-family:var(--mono);font-size:0.65rem;font-weight:700;
+  background:rgba(0,245,212,0.1);border:1px solid rgba(0,245,212,0.25);
+  color:var(--cyan);padding:0.18rem 0.5rem;border-radius:4px;letter-spacing:0.06em;
+}
+.nav-links{display:flex;align-items:center;gap:2rem}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.88rem;font-weight:600;transition:color 0.2s}
+.nav-links a:hover{color:var(--cyan)}
+.nav-cta{
+  background:linear-gradient(135deg,var(--violet),var(--violet-dim)) !important;
+  color:#fff !important;padding:0.5rem 1.2rem !important;
+  border-radius:8px !important;font-weight:700 !important;font-size:0.85rem !important;
+  box-shadow:0 0 20px var(--violet-glow) !important;
+  transition:box-shadow 0.2s,transform 0.2s !important;
+}
+.nav-cta:hover{box-shadow:0 0 32px rgba(124,58,237,0.5) !important;transform:translateY(-1px) !important}
+
+/* ── TICKER ── */
+.ticker-tape{
+  margin-top:64px;
+  background:linear-gradient(90deg,var(--violet-dim),var(--violet),var(--violet-dim));
+  overflow:hidden;white-space:nowrap;padding:0.55rem 0;
+  border-bottom:1px solid rgba(124,58,237,0.3);
+}
+.ticker-inner{display:inline-flex;gap:0;animation:ticker 30s linear infinite}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{
+  font-family:var(--mono);font-size:0.72rem;font-weight:700;
+  color:rgba(255,255,255,0.9);letter-spacing:0.1em;padding:0 2rem;
+}
+.ticker-item .t-cyan{color:var(--cyan)}
+.ticker-item .t-orange{color:var(--orange)}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:6rem 2rem 4rem;
+  position:relative;overflow:hidden;
+}
+
+/* Radial glow blobs */
+.blob{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.blob-v{width:600px;height:600px;background:var(--violet-glow);top:-100px;left:50%;transform:translateX(-50%)}
+.blob-c{width:400px;height:400px;background:var(--cyan-glow);bottom:0;right:-100px}
+.blob-o{width:300px;height:300px;background:var(--orange-glow);bottom:100px;left:-80px}
+
+/* SIGNATURE: Pulse heartbeat SVG */
+.pulse-wrap{
+  width:min(700px,90vw);height:90px;
+  margin-bottom:2.5rem;position:relative;z-index:1;
+}
+.pulse-svg{width:100%;height:100%}
+.pulse-line{
+  stroke-dasharray:1000;
+  stroke-dashoffset:1000;
+  animation:drawPulse 2s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+@keyframes drawPulse{
+  0%{stroke-dashoffset:1000;opacity:0.3}
+  100%{stroke-dashoffset:0;opacity:1}
+}
+.pulse-glow{
+  filter:drop-shadow(0 0 8px var(--cyan)) drop-shadow(0 0 20px rgba(0,245,212,0.4));
+}
+.pulse-dot{
+  animation:pulseDot 1.8s ease-in-out infinite;
+  animation-delay:1.8s;
+}
+@keyframes pulseDot{
+  0%,100%{r:4;opacity:0.6}50%{r:7;opacity:1}
+}
+
+.hero-eyebrow{
+  font-family:var(--mono);font-size:0.75rem;font-weight:700;
+  color:var(--cyan);letter-spacing:0.18em;text-transform:uppercase;
+  margin-bottom:1.2rem;position:relative;z-index:1;
+  animation:fadeUp 0.6s 0.2s both;
+}
+.hero h1{
+  font-size:clamp(2.8rem,6vw,5.5rem);font-weight:800;
+  letter-spacing:-0.04em;line-height:1.04;
+  margin-bottom:1.3rem;position:relative;z-index:1;
+  animation:fadeUp 0.6s 0.35s both;
+}
+.hero h1 .g-violet{
+  background:linear-gradient(90deg,var(--violet),var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero h1 .g-orange{color:var(--orange)}
+.hero-sub{
+  max-width:560px;font-size:1.08rem;color:var(--muted);line-height:1.75;
+  margin-bottom:2.5rem;position:relative;z-index:1;
+  animation:fadeUp 0.6s 0.5s both;
+}
+.hero-ctas{
+  display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;
+  position:relative;z-index:1;animation:fadeUp 0.6s 0.65s both;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--violet),var(--cyan));
+  color:#fff;padding:0.9rem 2.2rem;border-radius:10px;
+  font-family:var(--font);font-weight:800;font-size:0.95rem;
+  text-decoration:none;box-shadow:0 0 30px var(--violet-glow);
+  transition:box-shadow 0.2s,transform 0.2s;position:relative;overflow:hidden;
+}
+.btn-primary::after{
+  content:\'\';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);
+}
+.btn-primary:hover{box-shadow:0 0 50px rgba(124,58,237,0.5);transform:translateY(-2px)}
+.btn-ghost{
+  background:transparent;color:var(--white);
+  padding:0.9rem 2.2rem;border-radius:10px;
+  border:1px solid rgba(240,244,255,0.15);
+  font-family:var(--font);font-weight:700;font-size:0.95rem;
+  text-decoration:none;transition:border-color 0.2s,color 0.2s;
+}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* live stats strip */
+.hero-stats{
+  display:flex;gap:2.5rem;flex-wrap:wrap;justify-content:center;
+  margin-top:3.5rem;position:relative;z-index:1;
+  animation:fadeUp 0.6s 0.8s both;
+}
+.hero-stat{}
+.hero-stat .hs-label{font-family:var(--mono);font-size:0.68rem;color:var(--muted2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.25rem}
+.hero-stat .hs-val{font-family:var(--mono);font-size:1.35rem;font-weight:700;color:var(--cyan)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SECTION SHELL ── */
+.section-wrap{max-width:1100px;margin:0 auto;padding:6rem 2rem}
+.section-label{
+  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--cyan);margin-bottom:0.9rem;
+}
+h2{font-size:clamp(2rem,3.5vw,2.9rem);font-weight:800;letter-spacing:-0.035em;line-height:1.1;margin-bottom:1rem}
+h2 .hl{background:linear-gradient(90deg,var(--violet),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.section-intro{font-size:1.02rem;color:var(--muted);max-width:540px;margin-bottom:3rem;line-height:1.75}
+
+/* ── DARK BAND ── */
+.dark-band{background:var(--night2);border-top:1px solid rgba(124,58,237,0.12);border-bottom:1px solid rgba(124,58,237,0.12)}
+
+/* ── FEATURE CARDS ── */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1.25rem}
+.feat-card{
+  background:var(--night3);
+  border:1px solid rgba(124,58,237,0.15);
+  border-radius:16px;padding:1.8rem;
+  transition:border-color 0.25s,transform 0.25s,box-shadow 0.25s;
+  position:relative;overflow:hidden;
+}
+.feat-card::before{
+  content:\'\';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--violet),var(--cyan));
+  opacity:0;transition:opacity 0.25s;
+}
+.feat-card:hover{border-color:rgba(124,58,237,0.4);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,0.4)}
+.feat-card:hover::before{opacity:1}
+.feat-icon{
+  width:46px;height:46px;border-radius:12px;
+  background:rgba(124,58,237,0.15);
+  border:1px solid rgba(124,58,237,0.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.25rem;margin-bottom:1.2rem;
+}
+.feat-card h3{font-size:1.05rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:0.55rem}
+.feat-card p{font-size:0.88rem;color:var(--muted);line-height:1.65}
+.feat-tag{
+  display:inline-block;margin-top:1rem;
+  font-family:var(--mono);font-size:0.68rem;
+  background:rgba(0,245,212,0.08);border:1px solid rgba(0,245,212,0.2);
+  color:var(--cyan);padding:0.2rem 0.55rem;border-radius:4px;letter-spacing:0.06em;
+}
+
+/* ── HOW IT WORKS ── */
+.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;position:relative}
+.how-grid::before{
+  content:\'\';position:absolute;top:28px;left:calc(25% - 0px);right:calc(25% - 0px);
+  height:1px;background:linear-gradient(90deg,transparent,var(--violet),var(--cyan),transparent);
+}
+.how-step{text-align:center;padding:0 1.5rem 1.5rem}
+.how-num{
+  width:56px;height:56px;border-radius:50%;
+  background:var(--night3);border:2px solid var(--violet);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--cyan);
+  margin:0 auto 1.2rem;position:relative;z-index:1;
+  box-shadow:0 0 20px var(--violet-glow);
+}
+.how-step h3{font-size:0.95rem;font-weight:800;margin-bottom:0.5rem}
+.how-step p{font-size:0.85rem;color:var(--muted);line-height:1.6}
+
+/* ── TOKENOMICS ── */
+.tknm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:3rem}
+.tknm-card{
+  background:var(--night3);border:1px solid rgba(0,245,212,0.1);
+  border-radius:14px;padding:1.5rem;
+}
+.tknm-card .t-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted2);margin-bottom:0.5rem}
+.tknm-card .t-val{font-family:var(--mono);font-size:1.65rem;font-weight:700;letter-spacing:-0.02em}
+.tknm-card .t-sub{font-size:0.8rem;color:var(--muted);margin-top:0.25rem}
+.t-cyan{color:var(--cyan)}
+.t-violet{color:#A78BFA}
+.t-orange{color:var(--orange)}
+.t-white{color:var(--white)}
+
+/* alloc */
+.alloc-title{font-size:1rem;font-weight:700;margin-bottom:1.5rem;color:var(--white)}
+.alloc-list{display:flex;flex-direction:column;gap:1rem;max-width:680px}
+.alloc-row{display:grid;grid-template-columns:1fr auto;gap:1rem 1.5rem;align-items:center}
+.alloc-info{display:flex;flex-direction:column;gap:0.2rem}
+.alloc-name{font-size:0.88rem;font-weight:600;color:var(--white)}
+.alloc-desc{font-size:0.75rem;color:var(--muted2)}
+.alloc-right{display:flex;flex-direction:column;align-items:flex-end;gap:0.3rem}
+.alloc-pct{font-family:var(--mono);font-size:1rem;font-weight:700}
+.alloc-bar-bg{width:100px;height:5px;background:rgba(240,244,255,0.08);border-radius:3px;overflow:hidden}
+.alloc-bar-fill{height:100%;border-radius:3px}
+
+/* contract */
+.contract-box{
+  background:var(--night3);border:1px solid rgba(0,245,212,0.2);
+  border-radius:14px;padding:1.5rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;flex-wrap:wrap;margin-top:2.5rem;
+}
+.ca-label{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted2);margin-bottom:0.4rem}
+.ca-addr{font-family:var(--mono);font-size:0.88rem;color:var(--cyan);word-break:break-all}
+.copy-btn{
+  background:rgba(0,245,212,0.08);border:1px solid rgba(0,245,212,0.25);
+  color:var(--cyan);padding:0.5rem 1.1rem;border-radius:8px;
+  font-family:var(--mono);font-size:0.75rem;font-weight:700;
+  cursor:pointer;white-space:nowrap;transition:background 0.2s;
+}
+.copy-btn:hover{background:rgba(0,245,212,0.16)}
+
+/* ── ROADMAP ── */
+.roadmap-track{
+  position:relative;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:1.5rem;margin-top:2.5rem;
+}
+.rm-card{
+  background:var(--night3);border:1px solid rgba(124,58,237,0.15);
+  border-radius:16px;padding:1.8rem;
+  position:relative;overflow:hidden;
+}
+.rm-card.active{border-color:var(--cyan);box-shadow:0 0 30px var(--cyan-glow)}
+.rm-card.active::after{
+  content:\'LIVE\';position:absolute;top:1rem;right:1rem;
+  font-family:var(--mono);font-size:0.62rem;font-weight:700;letter-spacing:0.12em;
+  background:rgba(0,245,212,0.12);border:1px solid rgba(0,245,212,0.3);
+  color:var(--cyan);padding:0.2rem 0.55rem;border-radius:4px;
+}
+.rm-phase{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--violet);margin-bottom:0.5rem}
+.rm-card.active .rm-phase{color:var(--cyan)}
+.rm-card h3{font-size:1rem;font-weight:800;margin-bottom:0.9rem}
+.rm-list{list-style:none;display:flex;flex-direction:column;gap:0.45rem}
+.rm-list li{font-size:0.85rem;color:var(--muted);padding-left:1.1rem;position:relative}
+.rm-list li::before{content:\'▸\';position:absolute;left:0;color:var(--violet);font-size:0.7rem;top:2px}
+.rm-card.active .rm-list li::before{color:var(--cyan)}
+.rm-card.done .rm-list li{color:var(--muted2)}
+.rm-card.done .rm-list li::before{content:\'✓\';color:var(--cyan-dim)}
+
+/* ── COMMUNITY ── */
+.comm-band{background:var(--night2);border-top:1px solid rgba(255,107,53,0.1);border-bottom:1px solid rgba(255,107,53,0.1)}
+.comm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.2rem;margin-top:2.5rem}
+.comm-card{
+  background:var(--night3);border:1px solid rgba(240,244,255,0.07);
+  border-radius:16px;padding:1.8rem;text-decoration:none;color:var(--white);
+  display:flex;flex-direction:column;gap:0.6rem;
+  transition:border-color 0.2s,transform 0.2s,box-shadow 0.2s;
+}
+.comm-card:hover{border-color:var(--orange);transform:translateY(-4px);box-shadow:0 12px 32px rgba(255,107,53,0.12)}
+.cc-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:0.4rem}
+.cc-tg{background:rgba(41,182,246,0.1);border:1px solid rgba(41,182,246,0.2)}
+.cc-dc{background:rgba(114,137,218,0.1);border:1px solid rgba(114,137,218,0.2)}
+.cc-x{background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.1)}
+.cc-rh{background:rgba(0,245,212,0.08);border:1px solid rgba(0,245,212,0.15)}
+.comm-card h3{font-size:0.95rem;font-weight:800}
+.comm-card p{font-size:0.82rem;color:var(--muted)}
+
+/* ── CTA BAND ── */
+.cta-band{
+  text-align:center;padding:7rem 2rem;
+  position:relative;overflow:hidden;
+  background:var(--night2);
+}
+.cta-band::before{
+  content:\'\';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(124,58,237,0.15),transparent);
+}
+.cta-band h2{font-size:clamp(2rem,4vw,3.2rem);font-weight:800;letter-spacing:-0.035em;margin-bottom:1rem;position:relative;z-index:1}
+.cta-band p{font-size:1.02rem;color:var(--muted);max-width:480px;margin:0 auto 2.5rem;position:relative;z-index:1}
+.cta-band .hero-ctas{position:relative;z-index:1}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid rgba(240,244,255,0.06);padding:3rem 2rem;max-width:1100px;margin:0 auto;text-align:center}
+.footer-logo{font-size:1.2rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:0.5rem}
+.footer-logo span{color:var(--cyan)}
+footer p{font-size:0.8rem;color:rgba(240,244,255,0.3);line-height:1.85}
+footer a{color:rgba(240,244,255,0.4);text-decoration:none}
+footer a:hover{color:var(--cyan)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  nav{padding:0.9rem 1.2rem}
+  .nav-links{display:none}
+  .section-wrap{padding:4rem 1.2rem}
+  .how-grid::before{display:none}
+  .alloc-row{grid-template-columns:1fr}
+  .alloc-bar-bg{width:60px}
+}
+
+/* scroll reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.55s ease,transform 0.55s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-pulse">R</div>
+    <span class="logo-text">RobinPulse <span>AI</span></span>
+    <span class="nav-tag">$RPAI</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#tokenomics">Tokenomics</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="#community">Community</a>
+    <a href="https://supergemma.ai/launch" target="_blank" class="nav-cta">Buy $RPAI</a>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker-tape">
+  <div class="ticker-inner">
+    <span class="ticker-item">$RPAI &nbsp;<span class="t-cyan">◆</span>&nbsp; ROBINPULSE AI &nbsp;<span class="t-cyan">◆</span>&nbsp; DEFI AUTOMATION &nbsp;<span class="t-cyan">◆</span>&nbsp; YIELD OPTIMIZATION &nbsp;<span class="t-cyan">◆</span>&nbsp; ROBINHOOD NETWORK &nbsp;<span class="t-orange">◆</span>&nbsp; AI-POWERED &nbsp;<span class="t-orange">◆</span>&nbsp;</span>
+    <span class="ticker-item">$RPAI &nbsp;<span class="t-cyan">◆</span>&nbsp; ROBINPULSE AI &nbsp;<span class="t-cyan">◆</span>&nbsp; DEFI AUTOMATION &nbsp;<span class="t-cyan">◆</span>&nbsp; YIELD OPTIMIZATION &nbsp;<span class="t-cyan">◆</span>&nbsp; ROBINHOOD NETWORK &nbsp;<span class="t-orange">◆</span>&nbsp; AI-POWERED &nbsp;<span class="t-orange">◆</span>&nbsp;</span>
+    <span class="ticker-item">$RPAI &nbsp;<span class="t-cyan">◆</span>&nbsp; ROBINPULSE AI &nbsp;<span class="t-cyan">◆</span>&nbsp; DEFI AUTOMATION &nbsp;<span class="t-cyan">◆</span>&nbsp; YIELD OPTIMIZATION &nbsp;<span class="t-cyan">◆</span>&nbsp; ROBINHOOD NETWORK &nbsp;<span class="t-orange">◆</span>&nbsp; AI-POWERED &nbsp;<span class="t-orange">◆</span>&nbsp;</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="blob blob-v"></div>
+  <div class="blob blob-c"></div>
+  <div class="blob blob-o"></div>
+
+  <!-- SIGNATURE: Animated pulse / heartbeat line -->
+  <div class="pulse-wrap">
+    <svg class="pulse-svg pulse-glow" viewBox="0 0 700 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <polyline class="pulse-line" points="0,45 80,45 110,45 130,8 150,82 170,8 190,82 210,45 260,45 300,45 330,12 360,78 390,45 460,45 510,45 540,20 560,70 580,45 700,45"
+        stroke="url(#pulseGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle class="pulse-dot" cx="580" cy="45" r="4" fill="#00F5D4"/>
+      <defs>
+        <linearGradient id="pulseGrad" x1="0" y1="0" x2="700" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.2"/>
+          <stop offset="30%" stop-color="#7C3AED"/>
+          <stop offset="70%" stop-color="#00F5D4"/>
+          <stop offset="100%" stop-color="#00F5D4" stop-opacity="0.3"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <p class="hero-eyebrow">AI-Powered DeFi · Robinhood Network</p>
+
+  <h1>
+    The <span class="g-violet">pulse</span> of<br/>
+    <span class="g-orange">intelligent</span> yield
+  </h1>
+
+  <p class="hero-sub">
+    RobinPulse AI ($RPAI) is the DeFi automation engine for the Robinhood network —
+    putting AI-driven yield optimization and smart automation in the hands of every holder,
+    not just the whales.
+  </p>
+
+  <div class="hero-ctas">
+    <a href="https://supergemma.ai/launch" target="_blank" class="btn-primary">Launch App — Buy $RPAI →</a>
+    <a href="#features" class="btn-ghost">Explore features</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hs-label">Total Supply</div>
+      <div class="hs-val">1,000,000,000</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-label">Network</div>
+      <div class="hs-val" style="font-size:1rem;padding-top:0.2rem">Robinhood</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-label">Token</div>
+      <div class="hs-val">$RPAI</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-label">Launched via</div>
+      <div class="hs-val" style="font-size:0.85rem;padding-top:0.3rem">SGF Launchpad</div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+<div class="section-wrap">
+  <p class="section-label reveal">What $RPAI does</p>
+  <h2 class="reveal">AI that works <span class="hl">while you sleep</span></h2>
+  <p class="section-intro reveal">Forget manually chasing yields across protocols. RobinPulse AI's engine scans, scores, and deploys — automatically.</p>
+
+  <div class="features-grid">
+    <div class="feat-card reveal">
+      <div class="feat-icon">🤖</div>
+      <h3>AI Yield Optimizer</h3>
+      <p>Our onchain AI agent continuously scans liquidity pools and vaults across the Robinhood network, reallocating to the best risk-adjusted yields.</p>
+      <span class="feat-tag">LIVE</span>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon">⚡</div>
+      <h3>One-Click Automation</h3>
+      <p>Set your strategy once. The protocol auto-compounds, harvests rewards, and rebalances your position — no gas headaches, no missed windows.</p>
+      <span class="feat-tag">COMING SOON</span>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon">🛡️</div>
+      <h3>Risk Pulse Monitor</h3>
+      <p>Real-time risk scoring for every pool. The AI flags dangerous liquidity shifts and de-pegs before they become losses, so you exit first.</p>
+      <span class="feat-tag">BETA</span>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon">📡</div>
+      <h3>Community Signals</h3>
+      <p>Token holders receive weekly AI-generated market signals direct to Telegram and Discord. Alpha for the many, not the privileged few.</p>
+      <span class="feat-tag">LIVE</span>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon">🏹</div>
+      <h3>Robin Hood Distribution</h3>
+      <p>A portion of protocol yield fees flows back to $RPAI holders every epoch. The bigger the community, the larger the shared harvest.</p>
+      <span class="feat-tag">EPOCH 1</span>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon">🔐</div>
+      <h3>Non-Custodial by Design</h3>
+      <p>Your keys, your tokens. The AI acts as a strategy layer — it never takes custody of your assets. Full transparency, all on-chain.</p>
+      <span class="feat-tag">ALWAYS</span>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- HOW IT WORKS -->
+<div class="dark-band">
+<div class="section-wrap">
+  <p class="section-label reveal">How it works</p>
+  <h2 class="reveal">Four steps to <span class="hl">smarter yield</span></h2>
+
+  <div class="how-grid" style="margin-top:3rem">
+    <div class="how-step reveal">
+      <div class="how-num">01</div>
+      <h3>Hold $RPAI</h3>
+      <p>Acquire $RPAI on the Robinhood network via SGF Launchpad. Your tokens unlock access to the full automation suite.</p>
+    </div>
+    <div class="how-step reveal">
+      <div class="how-num">02</div>
+      <h3>Set Strategy</h3>
+      <p>Choose your risk profile — conservative, balanced, or aggressive. The AI tailors its optimization to your preference.</p>
+    </div>
+    <div class="how-step reveal">
+      <div class="how-num">03</div>
+      <h3>AI Deploys</h3>
+      <p>RobinPulse scans hundreds of pools, scores them in real time, and routes your capital to the highest risk-adjusted opportunities.</p>
+    </div>
+    <div class="how-step reveal">
+      <div class="how-num">04</div>
+      <h3>Earn & Share</h3>
+      <p>Yields auto-compound. Protocol fees are harvested and redistributed to all $RPAI holders every epoch — together we grow.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- TOKENOMICS -->
+<section id="tokenomics">
+<div class="section-wrap">
+  <p class="section-label reveal">Tokenomics</p>
+  <h2 class="reveal">Designed for the <span class="hl">long game</span></h2>
+  <p class="section-intro reveal">No hidden wallets. No surprise unlocks. Every allocation is on-chain and readable by anyone.</p>
+
+  <div class="tknm-grid">
+    <div class="tknm-card reveal">
+      <div class="t-label">Token</div>
+      <div class="t-val t-white" style="font-size:1.2rem">RobinPulse AI</div>
+      <div class="t-sub">$RPAI</div>
+    </div>
+    <div class="tknm-card reveal">
+      <div class="t-label">Total Supply</div>
+      <div class="t-val t-cyan">1B</div>
+      <div class="t-sub">1,000,000,000 tokens</div>
+    </div>
+    <div class="tknm-card reveal">
+      <div class="t-label">Network</div>
+      <div class="t-val t-violet" style="font-size:1.1rem">Robinhood</div>
+      <div class="t-sub">robinhood.com</div>
+    </div>
+    <div class="tknm-card reveal">
+      <div class="t-label">Launched via</div>
+      <div class="t-val t-orange" style="font-size:1rem;line-height:1.2">SGF<br/>Launchpad</div>
+      <div class="t-sub">supergemma.ai/launch</div>
+    </div>
+  </div>
+
+  <div class="alloc-title reveal" style="margin-top:2.5rem">Token Allocation</div>
+  <div class="alloc-list">
+    <div class="alloc-row reveal">
+      <div class="alloc-info">
+        <div class="alloc-name">Community &amp; Liquidity</div>
+        <div class="alloc-desc">Public distribution + DEX pool seeding</div>
+      </div>
+      <div class="alloc-right">
+        <div class="alloc-pct t-cyan">75%</div>
+        <div class="alloc-bar-bg"><div class="alloc-bar-fill" style="width:75%;background:var(--cyan)"></div></div>
+      </div>
+    </div>
+    <div class="alloc-row reveal">
+      <div class="alloc-info">
+        <div class="alloc-name">AI Protocol Vault</div>
+        <div class="alloc-desc">Funds the yield optimization engine</div>
+      </div>
+      <div class="alloc-right">
+        <div class="alloc-pct t-violet">12%</div>
+        <div class="alloc-bar-bg"><div class="alloc-bar-fill" style="width:12%;background:#A78BFA"></div></div>
+      </div>
+    </div>
+    <div class="alloc-row reveal">
+      <div class="alloc-info">
+        <div class="alloc-name">Ecosystem &amp; Partnerships</div>
+        <div class="alloc-desc">Integrations, grants, co-marketing</div>
+      </div>
+      <div class="alloc-right">
+        <div class="alloc-pct t-orange">8%</div>
+        <div class="alloc-bar-bg"><div class="alloc-bar-fill" style="width:8%;background:var(--orange)"></div></div>
+      </div>
+    </div>
+    <div class="alloc-row reveal">
+      <div class="alloc-info">
+        <div class="alloc-name">Team (12-month lock)</div>
+        <div class="alloc-desc">Fully locked, then 12-month linear vest</div>
+      </div>
+      <div class="alloc-right">
+        <div class="alloc-pct" style="color:var(--muted)">5%</div>
+        <div class="alloc-bar-bg"><div class="alloc-bar-fill" style="width:5%;background:rgba(240,244,255,0.3)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="contract-box reveal">
+    <div>
+      <div class="ca-label">Contract Address · Robinhood Network</div>
+      <div class="ca-addr" id="ca-text">TBA — published at token launch</div>
+    </div>
+    <button class="copy-btn" onclick="copyCA()">Copy Address</button>
+  </div>
+</div>
+</section>
+
+<!-- ROADMAP -->
+<div class="dark-band" id="roadmap">
+<div class="section-wrap">
+  <p class="section-label reveal">Roadmap</p>
+  <h2 class="reveal">Where the <span class="hl">pulse is heading</span></h2>
+  <p class="section-intro reveal">Honest milestones. Nothing overpromised, everything trackable on-chain.</p>
+
+  <div class="roadmap-track">
+    <div class="rm-card done reveal">
+      <div class="rm-phase">Phase 1 · Done</div>
+      <h3>Genesis</h3>
+      <ul class="rm-list">
+        <li>Concept &amp; tokenomics finalized</li>
+        <li>Community agent repo published</li>
+        <li>Website &amp; socials launched</li>
+        <li>SGF Launchpad submission</li>
+      </ul>
+    </div>
+    <div class="rm-card active reveal">
+      <div class="rm-phase">Phase 2 · Now</div>
+      <h3>Launch</h3>
+      <ul class="rm-list">
+        <li>$RPAI token launch on Robinhood</li>
+        <li>DEX liquidity pool live</li>
+        <li>Telegram + Discord bots deployed</li>
+        <li>AI signal feed — epoch 1</li>
+      </ul>
+    </div>
+    <div class="rm-card reveal">
+      <div class="rm-phase">Phase 3</div>
+      <h3>Automation</h3>
+      <ul class="rm-list">
+        <li>AI yield optimizer v1 launch</li>
+        <li>Risk Pulse Monitor (beta)</li>
+        <li>First holder reward epoch</li>
+        <li>Protocol audit &amp; verification</li>
+      </ul>
+    </div>
+    <div class="rm-card reveal">
+      <div class="rm-phase">Phase 4</div>
+      <h3>Ecosystem</h3>
+      <ul class="rm-list">
+        <li>Cross-protocol integrations</li>
+        <li>$RPAI governance proposals</li>
+        <li>Community grant program</li>
+        <li>AI v2 — multi-chain expansion</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- COMMUNITY -->
+<div class="comm-band" id="community">
+<div class="section-wrap">
+  <p class="section-label reveal">Community</p>
+  <h2 class="reveal">Join the <span class="hl">pulse network</span></h2>
+  <p class="section-intro reveal">The AI works harder when the community is larger. Come build with us.</p>
+
+  <div class="comm-grid">
+    <a href="#" class="comm-card reveal">
+      <div class="cc-icon cc-tg">💬</div>
+      <h3>Telegram</h3>
+      <p>Main chat, live announcements, and AI signal drops straight from the bot.</p>
+    </a>
+    <a href="#" class="comm-card reveal">
+      <div class="cc-icon cc-dc">🎮</div>
+      <h3>Discord</h3>
+      <p>Strategy rooms, voice hangouts, and the $RPAI community dashboard bot.</p>
+    </a>
+    <a href="#" class="comm-card reveal">
+      <div class="cc-icon cc-x">✦</div>
+      <h3>X / Twitter</h3>
+      <p>Market updates, AI insight threads, and community highlights in real time.</p>
+    </a>
+    <a href="#" class="comm-card reveal">
+      <div class="cc-icon cc-rh">🏹</div>
+      <h3>Robinhood Network</h3>
+      <p>Trade $RPAI natively on the Robinhood network — simple, fast, and accessible to all.</p>
+    </a>
+  </div>
+</div>
+</div>
+
+<!-- CTA -->
+<div class="cta-band">
+  <h2>The pulse starts <span class="hl">now</span></h2>
+  <p>Early holders shape the protocol. Get your $RPAI before the community grows.</p>
+  <div class="hero-ctas">
+    <a href="https://supergemma.ai/launch" target="_blank" class="btn-primary">Buy $RPAI on SGF Launchpad →</a>
+    <a href="https://github.com" target="_blank" class="btn-ghost">View GitHub</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">RobinPulse <span>AI</span></div>
+  <p style="margin-bottom:1rem;color:rgba(240,244,255,0.4)">$RPAI · Robinhood Network · DeFi Automation</p>
+  <p>
+    <a href="https://github.com" target="_blank">GitHub</a> &nbsp;·&nbsp;
+    <a href="https://supergemma.ai/launch" target="_blank">SGF Launchpad</a> &nbsp;·&nbsp;
+    <a href="https://robinhood.com" target="_blank">Robinhood</a>
+  </p>
+  <p style="margin-top:2rem;max-width:600px;margin-left:auto;margin-right:auto;font-size:0.75rem">
+    $RPAI is a community token. Nothing on this site constitutes financial or investment advice.
+    Crypto assets including DeFi tokens are highly volatile and you may lose the full value of your investment.
+    DeFi automation carries smart contract risk. Always do your own research.
+    This token was launched via SGF Launchpad's Instant Launch (beta) — read Supergemma's
+    Risk Disclosure and Terms before participating.
+  </p>
+</footer>
+
+<script>
+function copyCA(){
+  const t=document.getElementById('ca-text').textContent;
+  if(t.includes('TBA')){alert('Contract address will be available at launch.');return}
+  navigator.clipboard.writeText(t).then(()=>{
+    const b=document.querySelector('.copy-btn');
+    b.textContent='Copied!';
+    setTimeout(()=>{b.textContent='Copy Address'},1800);
+  });
+}
+
+// Scroll reveal
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){e.target.classList.add('visible')}
+  });
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>
